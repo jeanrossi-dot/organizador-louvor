@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Organizador de Louvor</title>
+<style>
+  html, body, #root { margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  #root { min-height: 100vh; min-height: 100dvh; }
+  body { background: #F4F1EA; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+  * { -webkit-tap-highlight-color: transparent; }
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useRef } = React;
+
+const Svg = ({ size = 16, style, className, children }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>{children}</svg>
+);
+const Music = (p) => <Svg {...p}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></Svg>;
+const Guitar = (p) => <Svg {...p}><circle cx="7" cy="17" r="4"/><path d="m10 14 8-8"/><path d="m15 3 6 6"/><path d="m16 5-2 2"/></Svg>;
+const Wand2 = (p) => <Svg {...p}><path d="m3 21 12-12"/><path d="M15 4V2"/><path d="M18 7h2"/><path d="m16.5 4.5 1.5-1.5"/><path d="M14.5 8.5 16 10"/></Svg>;
+const Copy = (p) => <Svg {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Svg>;
+const Check = (p) => <Svg {...p}><path d="M20 6 9 17l-5-5"/></Svg>;
+const Globe = (p) => <Svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></Svg>;
+const Loader2 = (p) => <Svg {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></Svg>;
+const ListMusic = (p) => <Svg {...p}><path d="M21 15V6"/><circle cx="18.5" cy="15.5" r="2.5"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></Svg>;
+const FileDown = (p) => <Svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></Svg>;
+const Columns2 = (p) => <Svg {...p}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></Svg>;
+const FileUp = (p) => <Svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6"/><path d="m9 15 3-3 3 3"/></Svg>;
+const ChevronUp = (p) => <Svg {...p}><path d="m18 15-6-6-6 6"/></Svg>;
+const ChevronDown = (p) => <Svg {...p}><path d="m6 9 6 6 6-6"/></Svg>;
+const Trash2 = (p) => <Svg {...p}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></Svg>;
+const Plus = (p) => <Svg {...p}><path d="M5 12h14"/><path d="M12 5v14"/></Svg>;
+
+
+const WATERMARK = "data:image/png;base64,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";
+const WM_JPEG = "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";
+const WM_W = 242, WM_H = 177;
+
+const C = {
+  bg: "#F4F1EA",
+  surface: "#FBFAF6",
+  ink: "#1A1815",
+  muted: "#6B655B",
+  line: "#E3DDD1",
+  lineSoft: "#EDE8DD",
+};
+const CHORD = "#C2622E";
+
+const DISPLAY = '"Segoe UI", system-ui, -apple-system, sans-serif';
+const MONO = '"SF Mono", "Cascadia Code", ui-monospace, Menlo, Consolas, monospace';
+
+const CAT_STYLE = {
+  chorus: { fg: "#8C4A30", bg: "#F0E0D6" },
+  prechorus: { fg: "#9A6B1F", bg: "#F1E6CE" },
+  postchorus: { fg: "#3F6B58", bg: "#DEEAE2" },
+  verse: { fg: "#475A6B", bg: "#E1E7ED" },
+  bridge: { fg: "#67496B", bg: "#E9E0EC" },
+  neutral: { fg: "#5C564C", bg: "#E9E4D8" },
+};
+
+const ROOT_GROUPS = [
+  ["postchorus", ["post-chorus", "post chorus", "pos-refrao", "pós-refrão", "pos refrao", "pós refrão"]],
+  ["prechorus", ["pre-chorus", "pre chorus", "prechorus", "pre-refrao", "pré-refrão", "pre refrao", "pré refrão"]],
+  ["chorus", ["chorus", "refrao", "refrão", "refrain"]],
+  ["verse", ["verse", "verso"]],
+  ["bridge", ["bridge", "ponte"]],
+  ["neutral", ["intro", "introducao", "introdução", "instrumental", "interlude", "interludio", "interlúdio", "tag", "vamp", "outro", "ending", "turnaround", "final", "saida", "saída", "coda"]],
+];
+
+function detectLabel(rawLine) {
+  const clean = rawLine.replace(/[\[\]]/g, "").trim();
+  if (!clean || clean.length > 24) return null;
+  const probe = clean.replace(/\(.*?\)/g, "").replace(/:$/, "").trim().toLowerCase();
+  for (const [cat, roots] of ROOT_GROUPS) {
+    for (const root of roots) {
+      const re = new RegExp("^" + root.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&") + "(\\s+\\d+)?$", "i");
+      if (re.test(probe)) return { cat, text: clean };
+    }
+  }
+  return null;
+}
+
+function parseSections(text) {
+  const lines = text.split("\n");
+  const blocks = []; let cur = null;
+  for (const line of lines) {
+    const label = detectLabel(line);
+    if (label) { cur = { label: label.text, cat: label.cat, lines: [] }; blocks.push(cur); }
+    else if (cur) { cur.lines.push({ t: line.trim() ? "lyric" : "blank", s: line }); }
+    else if (line.trim()) { cur = { label: null, cat: "neutral", lines: [{ t: "lyric", s: line }] }; blocks.push(cur); }
+  }
+  return blocks;
+}
+
+const CHORD_RE = /^[A-G][#b]?(maj|min|m|sus|dim|aug|add|M)?\d{0,2}(\([^)]*\))?(\/[A-G][#b]?)?$/;
+function isChordToken(t) { return CHORD_RE.test(t); }
+function isChordLine(line) {
+  const toks = line.trim().split(/\s+/).filter(Boolean);
+  if (!toks.length) return false;
+  let ch = 0;
+  for (const t of toks) if (isChordToken(t)) ch++;
+  return ch >= 1 && ch / toks.length >= 0.6;
+}
+
+function parseChordChart(text) {
+  const lines = text.split("\n");
+  const blocks = []; let cur = null;
+  const push = (t, s) => { if (!cur) { cur = { label: null, cat: "neutral", lines: [] }; blocks.push(cur); } cur.lines.push({ t, s }); };
+  for (const line of lines) {
+    const label = detectLabel(line);
+    if (label) { cur = { label: label.text, cat: label.cat, lines: [] }; blocks.push(cur); continue; }
+    if (!line.trim()) { push("blank", ""); continue; }
+    push(isChordLine(line) ? "chord" : "lyric", line);
+  }
+  return blocks;
+}
+
+async function parseApiResponse(res) {
+  const raw = await res.text();
+  if (!raw || !raw.trim()) throw new Error("resposta vazia (HTTP " + res.status + ")");
+  try { return JSON.parse(raw); } catch (_) { /* not plain JSON, try stream */ }
+  if (raw.indexOf("data:") !== -1) {
+    let text = "", errMsg = null;
+    for (const line of raw.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t.startsWith("data:")) continue;
+      const payload = t.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let ev; try { ev = JSON.parse(payload); } catch (_) { continue; }
+      if (ev.type === "error" && ev.error) errMsg = ev.error.message || ev.error.type || "erro da API";
+      else if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") text += ev.delta.text;
+      else if (ev.type === "content_block_start" && ev.content_block && ev.content_block.type === "text") text += (ev.content_block.text || "");
+    }
+    if (errMsg) throw new Error(errMsg);
+    if (text) return { content: [{ type: "text", text }] };
+    throw new Error("stream sem texto (HTTP " + res.status + ")");
+  }
+  throw new Error("formato inesperado: " + raw.slice(0, 100).replace(/\s+/g, " "));
+}
+
+async function pdfInflate(bytes) {
+  const run = async (fmt) => {
+    const ds = new DecompressionStream(fmt);
+    const w = ds.writable.getWriter();
+    w.write(bytes); w.close();
+    const ab = await new Response(ds.readable).arrayBuffer();
+    return new Uint8Array(ab);
+  };
+  try { return await run("deflate"); } catch (_) { try { return await run("deflate-raw"); } catch (_2) { return null; } }
+}
+
+const bytesToLatin1 = (u) => { let out = ""; const CH = 0x8000; for (let i = 0; i < u.length; i += CH) out += String.fromCharCode.apply(null, u.subarray(i, i + CH)); return out; };
+
+async function extractCifra(bytes) {
+  if (typeof DecompressionStream === "undefined") throw new Error("navegador sem suporte a descompactação de PDF");
+  const S = bytesToLatin1(bytes);
+  const toBytes = (str) => { const u = new Uint8Array(str.length); for (let i = 0; i < str.length; i++) u[i] = str.charCodeAt(i) & 255; return u; };
+  const objs = {}; const order = [];
+  const objRe = /(\d+) 0 obj([\s\S]*?)endobj/g; let m;
+  while ((m = objRe.exec(S))) { objs[+m[1]] = m[2]; order.push([+m[1], m.index]); }
+  const getStream = async (body) => {
+    const sm = /stream\r?\n/.exec(body); if (!sm) return null;
+    const start = sm.index + sm[0].length; const end = body.indexOf("endstream", start);
+    const raw = body.slice(start, end).replace(/\r?\n$/, "");
+    if (body.slice(0, sm.index).indexOf("/FlateDecode") !== -1) {
+      const inf = await pdfInflate(toBytes(raw)); if (!inf) return null;
+      return bytesToLatin1(inf);
+    }
+    return raw;
+  };
+  const parseTU = (t) => {
+    const mp = {};
+    for (const blk of t.match(/beginbfchar[\s\S]*?endbfchar/g) || []) {
+      const re = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g; let mm;
+      while ((mm = re.exec(blk))) { let s = ""; for (let i = 0; i < mm[2].length; i += 4) s += String.fromCharCode(parseInt(mm[2].slice(i, i + 4), 16)); mp[parseInt(mm[1], 16)] = s; }
+    }
+    for (const blk of t.match(/beginbfrange[\s\S]*?endbfrange/g) || []) {
+      const re = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g; let mm;
+      while ((mm = re.exec(blk))) { const lo = parseInt(mm[1], 16), hi = parseInt(mm[2], 16), base = parseInt(mm[3], 16); for (let k = lo; k <= hi && k - lo < 5000; k++) mp[k] = String.fromCharCode(base + (k - lo)); }
+    }
+    return mp;
+  };
+  const tuByFont = {};
+  for (const num in objs) {
+    const body = objs[num];
+    const mt = /\/ToUnicode\s+(\d+)\s+0\s+R/.exec(body);
+    if (mt && body.indexOf("/Font") !== -1) { const st = await getStream(objs[+mt[1]] || ""); if (st) tuByFont[num] = parseTU(st); }
+  }
+  const nameToFont = {};
+  { const re = /\/(F\d+)\s+(\d+)\s+0\s+R/g; let mm; while ((mm = re.exec(S))) nameToFont[mm[1]] = +mm[2]; }
+  const cmapFor = (n) => tuByFont[nameToFont[n]] || {};
+  order.sort((a, b) => a[1] - b[1]);
+  const lines = [];
+  for (const pair of order) {
+    const st = await getStream(objs[pair[0]]); if (!st || st.indexOf("BT") === -1) continue;
+    let cur = null, size = 12, x = 0, y = 0; const rows = [];
+    const re = /\/(F\d+)\s+([\d.]+)\s+Tf|(-?[\d.]+) 0 0 (-?[\d.]+) (-?[\d.]+) (-?[\d.]+) Tm|(-?[\d.]+)\s+(-?[\d.]+)\s+Td|\[([\s\S]*?)\]\s*TJ|<([0-9A-Fa-f]+)>\s*Tj/g;
+    let mm;
+    while ((mm = re.exec(st))) {
+      if (mm[1]) { cur = mm[1]; size = parseFloat(mm[2]); }
+      else if (mm[5] !== undefined) { x = parseFloat(mm[5]); y = parseFloat(mm[6]); }
+      else if (mm[7] !== undefined) { x += parseFloat(mm[7]); y += parseFloat(mm[8]); }
+      else {
+        const cm = cur ? cmapFor(cur) : {}; let hexes = [];
+        if (mm[9] !== undefined) { hexes = (mm[9].match(/<([0-9A-Fa-f]+)>/g) || []).map((h) => h.slice(1, -1)); }
+        else if (mm[10] !== undefined) hexes = [mm[10]];
+        let s = ""; for (const h of hexes) for (let i = 0; i < h.length; i += 4) { const c = cm[parseInt(h.slice(i, i + 4), 16)]; s += c === undefined ? "" : c; }
+        if (s !== "") rows.push([Math.round(y * 10) / 10, x, s, size]);
+      }
+    }
+    const byY = {};
+    for (const r of rows) { (byY[r[0]] = byY[r[0]] || []).push([r[1], r[2], r[3]]); }
+    for (const yy of Object.keys(byY).map(Number).sort((a, b) => a - b)) {
+      const segs = byY[yy].sort((a, b) => a[0] - b[0]);
+      let line = "", penEnd = 0;
+      for (const seg of segs) {
+        const xx = seg[0], s = seg[1], sz = seg[2], cw = sz * 0.5;
+        if (line === "") { const lead = Math.round(xx / cw); line = " ".repeat(Math.max(0, lead)); }
+        else { const gap = xx - penEnd; if (gap > cw * 1.25) line += " ".repeat(Math.max(1, Math.round(gap / cw))); }
+        line += s; penEnd = xx + s.length * cw;
+      }
+      lines.push(line.replace(/\s+$/, ""));
+    }
+  }
+  const lead = (s) => s.length - s.replace(/^ +/, "").length;
+  const ne = lines.filter((l) => l.trim());
+  const base = ne.length ? Math.min.apply(null, ne.map(lead)) : 0;
+  return lines.map((l) => (l.trim() ? l.slice(base) : ""));
+}
+
+function postProcessCifra(lines) {
+  let L = lines.filter((l) => !/utilize as cifras|acompanhamento por cifras|tocar sem o/i.test(l));
+  while (L.length && !L[0].trim()) L.shift();
+  let title = "", key = "";
+  for (let i = 0; i < Math.min(3, L.length); i++) {
+    const mm = /^(.+?)\s*[-\u2013]\s*([A-G][#b]?m?)\s*$/.exec(L[i].trim());
+    if (mm) { title = mm[1].replace(/\s{2,}/g, " ").trim(); key = mm[2]; L.splice(i, 1); break; }
+  }
+  while (L.length && !L[0].trim()) L.shift();
+  while (L.length && !L[L.length - 1].trim()) L.pop();
+  return { title: title, key: key, chart: L.join("\n") };
+}
+
+function splitChunks(text) {
+  const lines = text.split("\n");
+  const preamble = []; const chunks = []; let cur = null;
+  for (const line of lines) {
+    const label = detectLabel(line);
+    if (label) { cur = { label: label.text, cat: label.cat, lines: [line] }; chunks.push(cur); }
+    else if (cur) cur.lines.push(line);
+    else preamble.push(line);
+  }
+  return { preamble, chunks };
+}
+
+function serializeChunks(preamble, chunks) {
+  const norm = (arr) => { const a = arr.slice(); while (a.length && !a[0].trim()) a.shift(); while (a.length && !a[a.length - 1].trim()) a.pop(); return a.join("\n"); };
+  const parts = [];
+  const pre = norm(preamble);
+  if (pre.trim()) parts.push(pre);
+  for (const c of chunks) { const s = norm(c.lines); if (s !== "") parts.push(s); }
+  return parts.join("\n\n");
+}
+
+function autoLabelLyrics(text, lang) {
+  if (splitChunks(text).chunks.length) return text.replace(/^\n+|\n+$/g, "");
+  const V = lang === "pt" ? "Verso" : "Verse";
+  const CH = lang === "pt" ? "Refrão" : "Chorus";
+  const stanzas = text.split(/\n\s*\n/).map((s) => s.replace(/^\s+|\s+$/g, "")).filter(Boolean);
+  if (stanzas.length <= 1) return text.replace(/^\n+|\n+$/g, "");
+  const norm = (s) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const counts = {};
+  for (const s of stanzas) counts[norm(s)] = (counts[norm(s)] || 0) + 1;
+  let vn = 0; const out = [];
+  for (const s of stanzas) {
+    if (counts[norm(s)] > 1) out.push(CH, s, "");
+    else { vn++; out.push(V + " " + vn, s, ""); }
+  }
+  return out.join("\n").replace(/\n+$/, "");
+}
+
+function deriveStructure(text, mode) {
+  const blocks = mode === "cifras" ? parseChordChart(text) : parseSections(text);
+  return blocks.filter((b) => b.label).map((b) => ({ label: b.label, cat: b.cat }));
+}
+
+const pill = (active) => ({
+  padding: "7px 14px", borderRadius: 999, cursor: "pointer", fontSize: 13,
+  fontFamily: DISPLAY, fontWeight: 600, letterSpacing: "0.01em",
+  border: "1px solid " + (active ? C.ink : C.line),
+  background: active ? C.ink : C.surface, color: active ? C.surface : C.muted, transition: "all .15s",
+});
+const smPill = (active) => ({
+  padding: "5px 11px", borderRadius: 999, cursor: "pointer", fontSize: 12.5, fontFamily: DISPLAY, fontWeight: 600,
+  border: "1px solid " + (active ? C.ink : C.line), background: active ? C.ink : C.bg, color: active ? C.surface : C.muted,
+});
+const action = (filled) => ({
+  display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 9,
+  border: "1px solid " + C.line, background: filled ? C.ink : C.bg, color: filled ? C.surface : C.ink,
+  fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+});
+const iconBtn = (disabled) => ({
+  display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 30, borderRadius: 7,
+  border: "1px solid " + C.line, background: C.surface, color: disabled ? C.line : C.muted,
+  cursor: disabled ? "default" : "pointer", padding: 0,
+});
+
+function Result({ mode, result, title, subtitle, obs, columns, setColumns, twoCol, onPdf, pdfBusy, onCopy, copied, structure, setStructure }) {
+  const blocks = mode === "cifras" ? parseChordChart(result) : parseSections(result);
+  const struct = structure || [];
+  const move = (i, d) => { const j = i + d; if (j < 0 || j >= struct.length) return; const a = struct.slice(); const t = a[i]; a[i] = a[j]; a[j] = t; setStructure(a); };
+  const dup = (i) => { const a = struct.slice(); a.splice(i + 1, 0, { label: struct[i].label, cat: struct[i].cat }); setStructure(a); };
+  const rm = (i) => { const a = struct.slice(); a.splice(i, 1); setStructure(a); };
+
+  return (
+    <div style={{ background: C.surface, border: "1px solid " + C.line, borderRadius: 16, padding: 20, marginTop: 18 }}>
+      <div style={{ marginBottom: 16 }}>
+        {obs && <div style={{ fontSize: 13, color: C.muted, fontStyle: "italic", marginBottom: 8, lineHeight: 1.4 }}>{obs}</div>}
+        <h2 style={{ fontFamily: DISPLAY, fontSize: 23, fontWeight: 800, letterSpacing: "-0.015em", lineHeight: 1.12, margin: 0, color: title ? C.ink : C.muted }}>
+          {title || "Sem título"}
+        </h2>
+        {subtitle && <div style={{ fontSize: 14, color: C.muted, marginTop: 3, fontWeight: 500 }}>{subtitle}</div>}
+      </div>
+
+      {struct.length > 0 && (
+        <div style={{ marginBottom: 18, paddingBottom: 16, borderBottom: "1px solid " + C.lineSoft }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, fontWeight: 600 }}>
+              <ListMusic size={13} /> Estrutura da música
+            </span>
+            <span style={{ fontSize: 11.5, color: C.muted }}>roteiro do topo do PDF — não altera o corpo</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {struct.map((c, i) => {
+              const st = CAT_STYLE[c.cat] || CAT_STYLE.neutral;
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: C.bg, border: "1px solid " + C.line, borderRadius: 9, padding: "5px 8px" }}>
+                  <span style={{ color: C.muted, fontSize: 12, fontWeight: 700, width: 16, textAlign: "center" }}>{i + 1}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 7, background: st.bg, color: st.fg }}>{c.label}</span>
+                  <span style={{ flex: 1 }} />
+                  <button title="Mover para cima" onClick={() => move(i, -1)} disabled={i === 0} style={iconBtn(i === 0)}><ChevronUp size={15} /></button>
+                  <button title="Mover para baixo" onClick={() => move(i, 1)} disabled={i === struct.length - 1} style={iconBtn(i === struct.length - 1)}><ChevronDown size={15} /></button>
+                  <button title="Repetir no roteiro" onClick={() => dup(i)} style={iconBtn(false)}><Plus size={15} /></button>
+                  <button title="Remover do roteiro" onClick={() => rm(i)} style={iconBtn(false)}><Trash2 size={14} /></button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+        <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, fontWeight: 600 }}>{mode === "cifras" ? "Cifra" : "Letra estruturada"}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Columns2 size={13} style={{ color: C.muted }} />
+            <button onClick={() => setColumns("1")} style={smPill(columns === "1")}>1</button>
+            <button onClick={() => setColumns("2")} style={smPill(columns === "2")}>2</button>
+            <button onClick={() => setColumns("auto")} style={smPill(columns === "auto")}>Auto</button>
+          </div>
+          <button onClick={onPdf} disabled={pdfBusy} style={{ ...action(false), opacity: pdfBusy ? 0.7 : 1 }}>
+            {pdfBusy ? <Loader2 size={14} className="spin" /> : <FileDown size={14} />} {pdfBusy ? "Gerando..." : "Salvar PDF"}
+          </button>
+          <button onClick={onCopy} style={action(copied)}>{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copiado" : "Copiar"}</button>
+        </div>
+      </div>
+
+      <div style={{ position: "relative" }}>
+        <img src={WATERMARK} alt="" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "55%", maxWidth: 300, opacity: 0.07, pointerEvents: "none", userSelect: "none", zIndex: 0 }} />
+        <div style={{ position: "relative", zIndex: 1, fontFamily: MONO, fontSize: 13.5, lineHeight: 1.65, columnCount: twoCol ? 2 : 1, columnGap: "54px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          {blocks.map((b, bi) => {
+            const st = CAT_STYLE[b.cat] || CAT_STYLE.neutral;
+            return (
+              <div key={bi} style={{ marginBottom: 18, breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
+                {b.label && (
+                  <div style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "4px 11px", borderRadius: 7, background: st.bg, color: st.fg, marginBottom: 8 }}>
+                    {b.label}
+                  </div>
+                )}
+                {b.lines.map((ln, li) => {
+                  if (ln.t === "blank") return <div key={li} style={{ minHeight: "0.5em" }} />;
+                  const isCh = ln.t === "chord";
+                  return (
+                    <div key={li} style={{ whiteSpace: mode === "cifras" ? "pre" : "pre-wrap", color: isCh ? CHORD : C.ink, fontWeight: isCh ? 700 : 400 }}>
+                      {ln.s || "\u00A0"}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [tab, setTab] = useState("letras");
+
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [lyrics, setLyrics] = useState("");
+  const [result, setResult] = useState("");
+
+  const [cTitle, setCTitle] = useState("");
+  const [cKey, setCKey] = useState("");
+  const [cObs, setCObs] = useState("");
+  const [cChart, setCChart] = useState("");
+  const [cResult, setCResult] = useState("");
+
+  const [structL, setStructL] = useState([]);
+  const [structC, setStructC] = useState([]);
+
+  const [lang, setLang] = useState("en");
+  const [format, setFormat] = useState("label");
+  const [useWeb, setUseWeb] = useState(true);
+  const [columns, setColumns] = useState("auto");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+  const fileRef = useRef(null);
+
+  const labelGuide = lang === "pt"
+    ? "Use rótulos em português: Intro, Verso, Pré-Refrão, Refrão, Pós-Refrão, Ponte, Instrumental, Interlúdio, Tag, Vamp, Final."
+    : "Use English labels: Intro, Verse, Pre-Chorus, Chorus, Post-Chorus, Bridge, Instrumental, Interlude, Tag, Vamp, Ending.";
+
+  function buildPromptLyrics() {
+    const numbering = lang === "pt" ? "(ex.: Verso 1, Verso 2)" : "(e.g., Verse 1, Verse 2)";
+    const fmt = format === "bracket" ? "Coloque cada rótulo entre colchetes na própria linha, ex.: [Chorus]." : "Coloque cada rótulo na própria linha, sem colchetes, ex.: Chorus.";
+    const web = useWeb
+      ? "Se um título for fornecido, use a busca na web para confirmar o ARRANJO/ORDEM canônico das seções. Use SOMENTE para confirmar a estrutura — NUNCA copie a letra de fontes externas; trabalhe sempre com a letra colada pelo usuário."
+      : "Não use busca na web; deduza a estrutura pelo texto e pelos padrões de repetição.";
+    return `Você é um especialista em estrutura de músicas de louvor. Marque as seções de uma letra para uso em slides / Planning Center / ProPresenter.
+
+REGRAS:
+- Preserve EXATAMENTE cada linha da letra. NÃO traduza, reescreva, corrija nem remova nenhuma palavra.
+- Identifique e rotule: introdução, versos, pré-refrão, refrão, pós-refrão, ponte, instrumental, interlúdio, tag, vamp, final.
+- Detecte o refrão pela repetição de blocos.
+- Numere os versos ${numbering}. Um único refrão recebe só "Refrão"/"Chorus", sem número.
+- ${labelGuide}
+- ${fmt}
+- Separe cada seção com uma linha em branco.
+- ${web}
+- Saída: APENAS a letra estruturada entre as marcas <<<INICIO>>> e <<<FIM>>>.
+
+${title ? `MÚSICA: ${title}${artist ? " — " + artist : ""}` : ""}
+
+LETRA:
+${lyrics}`;
+  }
+
+  function buildPromptChords() {
+    const web = useWeb
+      ? "Se um título for fornecido, pode usar a busca na web para confirmar a ORDEM das seções. NUNCA traga acordes ou letras de fora; use só para confirmar a estrutura."
+      : "Não use busca na web.";
+    return `Você é um especialista em cifras de louvor. Organize a cifra abaixo marcando as seções.
+
+REGRAS CRÍTICAS:
+- Devolva a cifra EXATAMENTE como está, caractere por caractere, incluindo TODOS os espaços e a posição dos acordes acima das letras. NÃO reescreva, traduza, corrija nem reposicione nenhum acorde ou letra.
+- Sua ÚNICA alteração permitida é inserir ou padronizar as LINHAS DE RÓTULO de seção (Intro, Verse/Verso, Pre-Chorus/Pré-Refrão, Chorus/Refrão, Bridge/Ponte, etc.), cada uma em sua própria linha, antes da seção correspondente.
+- Linhas só com acordes (ex.: "C9 Am7 Em D9") sem letra geralmente são Intro ou Instrumental.
+- ${labelGuide}
+- ${web}
+- Saída: APENAS a cifra estruturada entre as marcas <<<INICIO>>> e <<<FIM>>>.
+
+${cTitle ? `MÚSICA: ${cTitle}${cKey ? " (Tom: " + cKey + ")" : ""}` : ""}
+
+CIFRA:
+${cChart}`;
+  }
+
+  async function organize(mode) {
+    const input = mode === "cifras" ? cChart : lyrics;
+    if (!input.trim()) { setError(mode === "cifras" ? "Cole a cifra primeiro." : "Cole a letra primeiro."); return; }
+    setLoading(true); setError(""); setCopied(false);
+    if (mode === "cifras") setCResult(""); else setResult("");
+    const trimBlank = (t) => { const L = t.split("\n"); while (L.length && !L[0].trim()) L.shift(); while (L.length && !L[L.length - 1].trim()) L.pop(); return L.join("\n"); };
+    let out = "";
+    try {
+      const body = {
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: mode === "cifras" ? buildPromptChords() : buildPromptLyrics() }],
+      };
+      if (useWeb) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      const data = await parseApiResponse(res);
+      const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
+      let o = text;
+      const m = text.match(/<<<INICIO>>>([\s\S]*?)<<<FIM>>>/);
+      if (m) o = m[1];
+      o = trimBlank(o.replace(/<<<INICIO>>>|<<<FIM>>>/g, ""));
+      if (o.trim()) out = o;
+    } catch (e) { /* IA indisponível — usa o modo offline abaixo */ }
+    if (!out.trim()) {
+      out = mode === "cifras" ? trimBlank(input) : autoLabelLyrics(input, lang);
+    }
+    const struct = deriveStructure(out, mode);
+    if (mode === "cifras") { setCResult(out); setStructC(struct); } else { setResult(out); setStructL(struct); }
+    setLoading(false);
+  }
+
+  async function importPdf(file) {
+    if (!file) return;
+    setError(""); setImporting(true); setImportMsg("Lendo PDF...");
+    try {
+      const buf = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(new Uint8Array(r.result));
+        r.onerror = () => rej(new Error("falha ao ler o arquivo"));
+        r.readAsArrayBuffer(file);
+      });
+      const lines = await extractCifra(buf);
+      const got = lines.filter((l) => l.trim()).length;
+      if (got < 2) throw new Error("não encontrei texto neste PDF (pode ser um PDF de imagem/escaneado)");
+      const r = postProcessCifra(lines);
+      if (r.title) setCTitle(r.title);
+      if (r.key) setCKey(r.key);
+      setCChart(r.chart || lines.join("\n"));
+    } catch (e) {
+      setError("Não consegui ler esse PDF (motivo: " + (e && e.message ? e.message : "erro") + "). Como alternativa, abra o PDF, copie o texto e cole no campo abaixo.");
+    } finally {
+      setImporting(false); setImportMsg("");
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  function copyOut(text) {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  }
+
+  function savePDF(mode) {
+    setError(""); setPdfBusy(true);
+    try {
+      const isC = mode === "cifras";
+      const T = isC ? cTitle : title;
+      const SUB = isC ? (cKey ? "Tom: " + cKey : "") : artist;
+      const OBS = isC ? cObs : "";
+      const blocks = isC ? parseChordChart(cResult) : parseSections(result);
+      const twoCol = isC ? (columns === "2") : (columns === "2" || (columns === "auto" && (result.split("\n").filter((l) => l.trim()).length > 30)));
+
+      const PW = 595.28, PH = 841.89, M = 42.52, GAP = 40;
+      const contentW = PW - 2 * M;
+      const colW = twoCol ? (contentW - GAP) / 2 : contentW;
+      const colX = twoCol ? [M, M + colW + GAP] : [M];
+      const INK = [0.102, 0.094, 0.082], MUT = [0.420, 0.396, 0.357], LINE = [0.843, 0.824, 0.784], CHC = [0.761, 0.384, 0.180];
+      const hx = (h) => { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
+      const CATC = {}; for (const k in CAT_STYLE) CATC[k] = { fg: hx(CAT_STYLE[k].fg), bg: hx(CAT_STYLE[k].bg) };
+      const esc = (s) => s.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+      const toWin = (s) => s.split("").map((ch) => (ch.charCodeAt(0) <= 255 ? ch : "?")).join("");
+      const F = { H: "/F1", HB: "/F2", TR: "/F3", TI: "/F4", CO: "/F5", COB: "/F6" };
+      const f2 = (n) => n.toFixed(2), f3 = (n) => n.toFixed(3);
+
+      const DW = 220, DH = DW * (WM_H / WM_W), IX = (PW - DW) / 2, IYb = (PH - DH) / 2;
+      const WM = "q " + f2(DW) + " 0 0 " + f2(DH) + " " + f2(IX) + " " + f2(IYb) + " cm\n/Im0 Do\nQ\n";
+
+      const pages = []; let cur;
+      const newPage = () => { cur = [WM]; pages.push(cur); };
+      const put = (s) => cur.push(s);
+
+      const text = (x, blTop, size, font, col, s, tc) => {
+        const py = PH - blTop;
+        put("BT\n" + F[font] + " " + f2(size) + " Tf\n" + f3(col[0]) + " " + f3(col[1]) + " " + f3(col[2]) + " rg\n" + f2(tc || 0) + " Tc\n1 0 0 1 " + f2(x) + " " + f2(py) + " Tm\n(" + esc(toWin(s)) + ") Tj\nET\n");
+      };
+      const rrect = (xT, yT, w, h, r, col) => {
+        const yb = PH - (yT + h), x = xT, c = r * 0.5523;
+        put(f3(col[0]) + " " + f3(col[1]) + " " + f3(col[2]) + " rg\n" +
+          f2(x + r) + " " + f2(yb) + " m\n" + f2(x + w - r) + " " + f2(yb) + " l\n" +
+          f2(x + w - r + c) + " " + f2(yb) + " " + f2(x + w) + " " + f2(yb + r - c) + " " + f2(x + w) + " " + f2(yb + r) + " c\n" +
+          f2(x + w) + " " + f2(yb + h - r) + " l\n" +
+          f2(x + w) + " " + f2(yb + h - r + c) + " " + f2(x + w - r + c) + " " + f2(yb + h) + " " + f2(x + w - r) + " " + f2(yb + h) + " c\n" +
+          f2(x + r) + " " + f2(yb + h) + " l\n" +
+          f2(x + r - c) + " " + f2(yb + h) + " " + f2(x) + " " + f2(yb + h - r + c) + " " + f2(x) + " " + f2(yb + h - r) + " c\n" +
+          f2(x) + " " + f2(yb + r) + " l\n" +
+          f2(x) + " " + f2(yb + r - c) + " " + f2(x + r - c) + " " + f2(yb) + " " + f2(x + r) + " " + f2(yb) + " c\n" + "h f\n");
+      };
+      const arrow = (xL, midTop, col) => {
+        const mid = PH - midTop;
+        put(f3(col[0]) + " " + f3(col[1]) + " " + f3(col[2]) + " RG\n0.8 w\n" +
+          f2(xL) + " " + f2(mid) + " m " + f2(xL + 6) + " " + f2(mid) + " l S\n" +
+          f2(xL + 3) + " " + f2(mid + 2.2) + " m " + f2(xL + 6) + " " + f2(mid) + " l " + f2(xL + 3) + " " + f2(mid - 2.2) + " l S\n");
+      };
+      const hline = (xT, yT, w, col) => {
+        const yb = PH - yT;
+        put(f3(col[0]) + " " + f3(col[1]) + " " + f3(col[2]) + " RG\n0.6 w\n" + f2(xT) + " " + f2(yb) + " m " + f2(xT + w) + " " + f2(yb) + " l S\n");
+      };
+      const meas = (s, size, bold) => s.length * size * (bold ? 0.56 : 0.5);
+      const wrapw = (txt, size, maxw, bold) => {
+        const cw = size * (bold ? 0.56 : 0.5), mx = Math.max(4, Math.floor(maxw / cw));
+        const words = txt.split(/\s+/).filter(Boolean); const lines = []; let c = "";
+        for (const w of words) {
+          const t = c ? c + " " + w : w;
+          if (t.length <= mx) c = t;
+          else { if (c) lines.push(c); if (w.length > mx) { let s = w; while (s.length > mx) { lines.push(s.slice(0, mx)); s = s.slice(mx); } c = s; } else c = w; }
+        }
+        if (c) lines.push(c);
+        return lines.length ? lines : [""];
+      };
+
+      const CH_H = 12.5;
+      newPage();
+      let tY = M;
+      if (OBS) { for (const ol of wrapw(OBS, 9.5, contentW, false)) { text(M, tY + 7.6, 9.5, "TI", MUT, ol, 0); tY += 12; } tY += 6; }
+      for (const tl of wrapw(T || "Sem título", 18, contentW, true)) { text(M, tY + 14.4, 18, "HB", INK, tl, 0); tY += 22; }
+      if (SUB) { text(M, tY + 8.6, 11, "TI", MUT, SUB, 0); tY += 16; }
+      tY += 8;
+
+      const seq = (isC ? structC : structL) || [];
+      if (seq.length) {
+        text(M, tY + 6.4, 8, "HB", MUT, "ESTRUTURA DA M\u00daSICA", 0.6); tY += 13;
+        const chipH = 14; let cx = M, cy = tY;
+        for (let i = 0; i < seq.length; i++) {
+          const cc = CATC[seq[i].cat] || CATC.neutral;
+          const w = meas(seq[i].label, 8.5, false) + 14;
+          if (cx + w > M + contentW) { cx = M; cy += chipH + 5; }
+          rrect(cx, cy, w, chipH, 3, cc.bg);
+          text(cx + 7, cy + chipH / 2 + 2.9, 8.5, "H", cc.fg, seq[i].label, 0);
+          cx += w;
+          if (i < seq.length - 1) { arrow(cx + 3, cy + chipH / 2, LINE); cx += 12; }
+        }
+        tY = cy + chipH + 14;
+        tY += 10;
+      }
+      text(M, tY + 6.4, 8, "HB", MUT, isC ? "CIFRA" : "LETRA ESTRUTURADA", 0.6); tY += 16;
+      let columnTop = tY, col = 0, y = columnTop;
+
+      const LYR_H = 14, GAP_H = 7, PILL_H = 15, LBL_ADV = 20, BLK_GAP = 9;
+      const blockH = (b) => {
+        let h = b.label ? LBL_ADV : 0;
+        for (const ln of b.lines) {
+          if (ln.t === "blank") h += GAP_H;
+          else if (isC) h += CH_H;
+          else h += wrapw(ln.s, 11, colW, false).length * LYR_H;
+        }
+        return h + BLK_GAP;
+      };
+      for (const b of blocks) {
+        const bh = blockH(b);
+        if (y + bh > PH - M) { if (col < colX.length - 1) { col++; y = columnTop; } else { newPage(); columnTop = M; col = 0; y = M; } }
+        const x = colX[col];
+        if (b.label) {
+          const cc = CATC[b.cat] || CATC.neutral; const lab = b.label.toUpperCase();
+          const lblSize = 8.5, lblTc = 0.3, lblPad = 9;
+          const textW = lab.length * lblSize * 0.62 + lblTc * lab.length;
+          const w = textW + lblPad * 2;
+          rrect(x, y, w, PILL_H, 3, cc.bg);
+          text(x + lblPad, y + PILL_H / 2 + lblSize * 0.35, lblSize, "HB", cc.fg, lab, lblTc);
+          y += LBL_ADV;
+        }
+        for (const ln of b.lines) {
+          if (ln.t === "blank") { y += GAP_H; continue; }
+          if (isC) {
+            const isCh = ln.t === "chord";
+            text(x, y + 7.6, 9.5, isCh ? "COB" : "CO", isCh ? CHC : INK, ln.s, 0);
+            y += CH_H;
+          } else {
+            for (const ww of wrapw(ln.s, 11, colW, false)) { text(x, y + 8.8, 11, "TR", INK, ww, 0); y += LYR_H; }
+          }
+        }
+        y += BLK_GAP;
+      }
+
+      const footerLines = ["Utilize as cifras para estudar e se preparar durante a semana.", "No culto, nosso objetivo é tocar sem o acompanhamento por cifras"];
+      for (let pi = 0; pi < pages.length; pi++) {
+        cur = pages[pi];
+        for (let k = 0; k < footerLines.length; k++) {
+          const fw = meas(footerLines[k], 7.5, false);
+          text((PW - fw) / 2, PH - 24 + k * 10, 7.5, "H", MUT, footerLines[k], 0);
+        }
+      }
+
+      const jbin = atob(WM_JPEG);
+      const nPages = pages.length;
+      let nid = 10; const contentIds = [], pageIds = [];
+      for (let i = 0; i < nPages; i++) { contentIds.push(nid++); pageIds.push(nid++); }
+      const fontObj = (bf) => "<< /Type /Font /Subtype /Type1 /BaseFont /" + bf + " /Encoding /WinAnsiEncoding >>";
+      const objText = {
+        1: "<< /Type /Catalog /Pages 2 0 R >>",
+        2: "<< /Type /Pages /Kids [" + pageIds.map((p) => p + " 0 R").join(" ") + "] /Count " + nPages + " >>",
+        3: fontObj("Helvetica"), 4: fontObj("Helvetica-Bold"), 5: fontObj("Times-Roman"), 6: fontObj("Times-Italic"),
+        8: fontObj("Courier"), 9: fontObj("Courier-Bold"),
+      };
+      const resourcesDict = "<< /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 8 0 R /F6 9 0 R >> /XObject << /Im0 7 0 R >> >>";
+
+      let out = "%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n";
+      const offsets = {};
+      const writeObj = (num, body) => { offsets[num] = out.length; out += num + " 0 obj\n" + body + "\nendobj\n"; };
+      for (const num of [1, 2, 3, 4, 5, 6]) writeObj(num, objText[num]);
+      const imgDict = "<< /Type /XObject /Subtype /Image /Width " + WM_W + " /Height " + WM_H + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jbin.length + " >>";
+      offsets[7] = out.length; out += "7 0 obj\n" + imgDict + "\nstream\n" + jbin + "\nendstream\nendobj\n";
+      writeObj(8, objText[8]); writeObj(9, objText[9]);
+      for (let i = 0; i < nPages; i++) {
+        const cs = pages[i].join("");
+        offsets[contentIds[i]] = out.length;
+        out += contentIds[i] + " 0 obj\n<< /Length " + cs.length + " >>\nstream\n" + cs + "\nendstream\nendobj\n";
+        writeObj(pageIds[i], "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + f2(PW) + " " + f2(PH) + "] /Resources " + resourcesDict + " /Contents " + contentIds[i] + " 0 R >>");
+      }
+      const total = nid - 1, xrefOff = out.length;
+      out += "xref\n0 " + (total + 1) + "\n0000000000 65535 f \n";
+      for (let num = 1; num <= total; num++) out += String(offsets[num] || 0).padStart(10, "0") + " 00000 n \n";
+      out += "trailer\n<< /Size " + (total + 1) + " /Root 1 0 R >>\nstartxref\n" + xrefOff + "\n%%EOF";
+
+      const bytes = new Uint8Array(out.length);
+      for (let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 0xff;
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const cleanName = (x) => String(x || "").replace(/[\/\\:*?"<>|]/g, "").replace(/\s+/g, " ").trim();
+      const songName = cleanName(T) || "Musica";
+      const fname = isC
+        ? songName + (cleanName(cKey) ? " - " + cleanName(cKey) : "") + " - Cifras.pdf"
+        : songName + " - " + (lang === "pt" ? "Letras" : "Lyrics") + ".pdf";
+      a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+    } catch (e) {
+      setError("Não consegui gerar o PDF agora. Tente novamente.");
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
+  const twoColLetras = columns === "2" || (columns === "auto" && result.split("\n").filter((l) => l.trim()).length > 30);
+  const twoColCifras = columns === "2";
+
+  const tabBtn = (id, label, Icon) => (
+    <button onClick={() => { setTab(id); setError(""); }} style={{
+      display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 11, cursor: "pointer",
+      fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: "0.01em",
+      border: "1px solid " + (tab === id ? C.ink : C.line), background: tab === id ? C.ink : C.surface, color: tab === id ? C.surface : C.muted,
+    }}><Icon size={16} /> {label}</button>
+  );
+
+  const inputStyle = (flex) => ({ flex, minWidth: 0, padding: "11px 13px", borderRadius: 10, border: "1px solid " + C.line, background: C.bg, fontFamily: DISPLAY, fontSize: 14, color: C.ink, outline: "none" });
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100%", padding: "32px 18px", fontFamily: DISPLAY, color: C.ink }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 4 }}>
+          <Music size={20} style={{ color: C.ink }} />
+          <span style={{ fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, fontWeight: 600 }}>Planejamento de louvor</span>
+        </div>
+        <h1 style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, margin: "0 0 18px" }}>Organizador de louvor</h1>
+
+        <div style={{ display: "flex", gap: 9, marginBottom: 20 }}>
+          {tabBtn("letras", "Letras", Music)}
+          {tabBtn("cifras", "Cifras", Guitar)}
+        </div>
+
+        {tab === "letras" && (
+          <>
+            <div style={{ background: C.surface, border: "1px solid " + C.line, borderRadius: 16, padding: 20 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nome da música (opcional)" style={inputStyle("1 1 240px")} />
+                <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="Artista (opcional)" style={inputStyle("1 1 180px")} />
+              </div>
+              <textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} rows={9}
+                placeholder={"Cole a letra aqui...\n\nNas alturas eu Te exaltarei\nMeu Deus, minha rocha..."}
+                style={{ width: "100%", boxSizing: "border-box", padding: "13px 14px", borderRadius: 12, border: "1px solid " + C.line, background: C.bg, fontFamily: MONO, fontSize: 13.5, lineHeight: 1.6, color: C.ink, resize: "vertical", outline: "none" }} />
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 22, alignItems: "center", margin: "16px 2px 4px" }}>
+                <div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, marginBottom: 7, fontWeight: 600 }}>Rótulos</div>
+                  <div style={{ display: "flex", gap: 7 }}><button onClick={() => setLang("en")} style={pill(lang === "en")}>Inglês</button><button onClick={() => setLang("pt")} style={pill(lang === "pt")}>Português</button></div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, marginBottom: 7, fontWeight: 600 }}>Formato</div>
+                  <div style={{ display: "flex", gap: 7 }}><button onClick={() => setFormat("label")} style={pill(format === "label")}>Chorus</button><button onClick={() => setFormat("bracket")} style={pill(format === "bracket")}>[Chorus]</button></div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, marginBottom: 7, fontWeight: 600 }}>Consulta online</div>
+                  <button onClick={() => setUseWeb(!useWeb)} style={{ ...pill(useWeb), display: "flex", alignItems: "center", gap: 7 }}><Globe size={14} /> {useWeb ? "Ligada" : "Desligada"}</button>
+                </div>
+              </div>
+
+              <button onClick={() => organize("letras")} disabled={loading} style={{ marginTop: 20, width: "100%", padding: "14px", borderRadius: 12, border: "none", background: C.ink, color: C.surface, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: loading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, opacity: loading ? 0.7 : 1 }}>
+                {loading ? <Loader2 size={17} className="spin" /> : <Wand2 size={17} />}
+                {loading ? (useWeb ? "Consultando e organizando..." : "Organizando...") : "Organizar letra"}
+              </button>
+              {error && <p style={{ color: "#9A3B2E", fontSize: 13.5, margin: "12px 2px 0" }}>{error}</p>}
+            </div>
+
+            {result && <Result mode="letras" result={result} title={title} subtitle={artist} obs="" columns={columns} setColumns={setColumns} twoCol={twoColLetras} onPdf={() => savePDF("letras")} pdfBusy={pdfBusy} onCopy={() => copyOut(result)} copied={copied} structure={structL} setStructure={setStructL} />}
+          </>
+        )}
+
+        {tab === "cifras" && (
+          <>
+            <div style={{ background: C.surface, border: "1px solid " + C.line, borderRadius: 16, padding: 20 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 14, paddingBottom: 14, borderBottom: "1px solid " + C.lineSoft }}>
+                <input ref={fileRef} type="file" accept="application/pdf,.pdf" style={{ display: "none" }} onChange={(e) => importPdf(e.target.files && e.target.files[0])} />
+                <button onClick={() => fileRef.current && fileRef.current.click()} disabled={importing} style={{ ...action(false), opacity: importing ? 0.7 : 1 }}>
+                  {importing ? <Loader2 size={14} className="spin" /> : <FileUp size={14} />} {importing ? "Lendo PDF..." : "Importar PDF"}
+                </button>
+                <span style={{ fontSize: 12.5, color: C.muted }}>{importing ? (importMsg || "Lendo PDF...") : "Importe um PDF de cifra, ou cole/digite abaixo."}</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
+                <input value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="Nome da música (opcional)" style={inputStyle("1 1 240px")} />
+                <input value={cKey} onChange={(e) => setCKey(e.target.value)} placeholder="Tom (ex.: G)" style={inputStyle("1 1 110px")} />
+              </div>
+              <input value={cObs} onChange={(e) => setCObs(e.target.value)} placeholder="Cantor / versão (opcional)" style={{ ...inputStyle("1 1 100%"), width: "100%", boxSizing: "border-box", marginBottom: 12 }} />
+              <textarea value={cChart} onChange={(e) => setCChart(e.target.value)} rows={11}
+                placeholder={"Cole a cifra aqui (acordes acima da letra)...\n\n Em            C9\nO que faz o cordeiro que venceu\n   G               D9\nO Rei dos reis que assentando no trono está"}
+                style={{ width: "100%", boxSizing: "border-box", padding: "13px 14px", borderRadius: 12, border: "1px solid " + C.line, background: C.bg, fontFamily: MONO, fontSize: 13, lineHeight: 1.55, color: C.ink, resize: "vertical", outline: "none", whiteSpace: "pre" }} />
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 22, alignItems: "center", margin: "16px 2px 4px" }}>
+                <div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, marginBottom: 7, fontWeight: 600 }}>Rótulos</div>
+                  <div style={{ display: "flex", gap: 7 }}><button onClick={() => setLang("en")} style={pill(lang === "en")}>Inglês</button><button onClick={() => setLang("pt")} style={pill(lang === "pt")}>Português</button></div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted, marginBottom: 7, fontWeight: 600 }}>Consulta online</div>
+                  <button onClick={() => setUseWeb(!useWeb)} style={{ ...pill(useWeb), display: "flex", alignItems: "center", gap: 7 }}><Globe size={14} /> {useWeb ? "Ligada" : "Desligada"}</button>
+                </div>
+              </div>
+
+              <button onClick={() => organize("cifras")} disabled={loading} style={{ marginTop: 20, width: "100%", padding: "14px", borderRadius: 12, border: "none", background: C.ink, color: C.surface, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: loading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, opacity: loading ? 0.7 : 1 }}>
+                {loading ? <Loader2 size={17} className="spin" /> : <Guitar size={17} />}
+                {loading ? "Montando cifra..." : "Montar cifra"}
+              </button>
+              {error && <p style={{ color: "#9A3B2E", fontSize: 13.5, margin: "12px 2px 0" }}>{error}</p>}
+            </div>
+
+            {cResult && <Result mode="cifras" result={cResult} title={cTitle} subtitle={cKey ? "Tom: " + cKey : ""} obs={cObs} columns={columns} setColumns={setColumns} twoCol={twoColCifras} onPdf={() => savePDF("cifras")} pdfBusy={pdfBusy} onCopy={() => copyOut(cResult)} copied={copied} structure={structC} setStructure={setStructC} />}
+          </>
+        )}
+
+        <p style={{ color: C.muted, fontSize: 12.5, lineHeight: 1.55, margin: "18px 4px 0", textAlign: "center" }}>
+          {tab === "cifras"
+            ? "Importar PDF lê seu arquivo e preenche nome, tom e a cifra (editável). Os acordes que você colar são preservados como estão; o agente só marca as seções. O PDF sai com a marca d'água da PBC."
+            : "A consulta online confirma só a ordem das seções — a letra usada é sempre a que você colou. O PDF sai colorido, com a marca d'água da PBC."}
+        </p>
+      </div>
+      <style>{`.spin{animation:s 1s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+        textarea:focus,input:focus{border-color:${C.ink}!important}
+        *{-webkit-tap-highlight-color:transparent}
+        html{-webkit-text-size-adjust:100%}
+        body{overflow-x:hidden}
+        @media (max-width:820px){input,textarea{font-size:16px !important}}`}</style>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
